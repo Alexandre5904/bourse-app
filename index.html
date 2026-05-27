@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Analyse Fondamentale</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#F7F4EF;color:#1A1714;min-height:100vh}
+header{position:sticky;top:0;background:#ffffffee;backdrop-filter:blur(12px);border-bottom:1px solid #E2DDD6;padding:0 24px;height:54px;display:flex;align-items:center;gap:12px;z-index:100}
+.logo{font-family:'Cormorant Garamond',serif;font-size:20px;color:#2C4A7C;letter-spacing:.3px}
+.search-wrap{margin-left:auto;position:relative}
+#searchBtn{display:flex;align-items:center;gap:7px;padding:7px 16px;background:#EBF0FA;border:1px solid #2C4A7C44;border-radius:20px;color:#2C4A7C;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500}
+#searchBox{display:none;align-items:center;gap:8px;background:#fff;border:1.5px solid #2C4A7C;border-radius:10px;padding:6px 14px;min-width:280px}
+#searchBox input{flex:1;background:transparent;border:none;outline:none;font-size:13px;color:#1A1714;font-family:inherit}
+#searchBox button{background:none;border:none;cursor:pointer;font-size:14px;color:#7A7268}
+#results{position:absolute;top:calc(100% + 6px);right:0;width:320px;background:#fff;border:1px solid #E2DDD6;border-radius:12px;display:none;overflow:hidden;box-shadow:0 8px 32px #00000014;z-index:200}
+.res-item{padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #E2DDD6;display:flex;justify-content:space-between;align-items:center}
+.res-item:hover{background:#EBF0FA}
+.res-item:last-child{border-bottom:none}
+.res-name{font-weight:600;color:#1A1714}
+.res-ticker{font-size:11px;color:#7A7268;margin-left:8px}
+.res-ex{font-size:10px;background:#EBF0FA;color:#2C4A7C;padding:2px 8px;border-radius:5px;font-weight:500}
+main{max-width:900px;margin:0 auto;padding:36px 24px}
+h1{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:400;color:#1A1714;margin-bottom:8px}
+.subtitle{font-size:14px;color:#7A7268;margin-bottom:40px}
+.market-section{margin-bottom:36px}
+.market-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#1A1714;margin-bottom:4px;display:flex;align-items:baseline;gap:16px}
+.market-title::after{content:'';flex:1;height:1px;background:#E2DDD6}
+.market-count{font-size:11px;color:#B0A898;font-family:'DM Sans',sans-serif;margin-right:8px}
+.company-list{margin-top:14px;border:1px solid #E2DDD6;border-radius:12px;overflow:hidden;background:#fff}
+.company-row{display:grid;grid-template-columns:1fr 120px 100px 80px;align-items:center;padding:12px 16px;border-bottom:1px solid #f0ede8;cursor:pointer;transition:background .15s}
+.company-row:last-child{border-bottom:none}
+.company-row:hover{background:#F7F4EF}
+.co-name{font-weight:500;font-size:14px;color:#1A1714}
+.co-ticker{font-size:11px;color:#7A7268;font-family:'DM Mono',monospace;margin-top:2px}
+.co-cap{font-size:13px;color:#7A7268;font-family:'DM Mono',monospace;text-align:right}
+.co-price{font-size:13px;font-family:'DM Mono',monospace;text-align:right;color:#1A1714;font-weight:500}
+.co-change{font-size:12px;font-family:'DM Mono',monospace;text-align:right;font-weight:600}
+.pos{color:#2D7A50}.neg{color:#C0392B}
+.rank{width:20px;height:20px;border-radius:6px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;display:inline-flex;align-items:center;justify-content:center;margin-right:8px}
+.rank-1{background:#FDF6E3;color:#B8962E}
+.rank-2{background:#F5F5F5;color:#909090}
+.rank-3{background:#FDF0E8;color:#A06840}
+
+/* DETAIL PAGE */
+#detail{display:none;max-width:900px;margin:0 auto;padding:24px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid #E2DDD6;border-radius:8px;color:#7A7268;font-size:12px;cursor:pointer;font-family:inherit;margin-bottom:20px}
+.back-btn:hover{background:#F7F4EF}
+.detail-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.detail-name{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:400;color:#1A1714}
+.detail-meta{font-size:12px;color:#7A7268;font-family:'DM Mono',monospace;margin-top:4px}
+.detail-price{font-size:28px;font-weight:600;font-family:'DM Mono',monospace;color:#2C4A7C;text-align:right}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.kpi{background:#fff;border:1px solid #E2DDD6;border-radius:12px;padding:14px 16px}
+.kpi-label{font-size:10px;color:#B0A898;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.kpi-val{font-size:20px;font-weight:600;font-family:'DM Mono',monospace;color:#2C4A7C}
+.section-title{display:flex;align-items:center;gap:12px;margin:24px 0 12px;font-size:10px;color:#2C4A7C;font-weight:500;text-transform:uppercase;letter-spacing:.12em}
+.section-title::before,.section-title::after{content:'';flex:1;height:1px;background:#E2DDD6}
+.card{background:#fff;border:1px solid #E2DDD6;border-radius:14px;padding:18px;margin-bottom:14px}
+.tabs{display:flex;gap:3px;background:#F7F4EF;border-radius:9px;padding:3px}
+.tab-btn{padding:5px 11px;border-radius:7px;border:none;background:transparent;font-family:inherit;font-size:11px;cursor:pointer;color:#7A7268;transition:all .15s}
+.tab-btn.on{background:#2C4A7C;color:#fff;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:right;padding:6px 8px;color:#B0A898;font-weight:500;font-size:10px;border-bottom:1px solid #E2DDD6;white-space:nowrap}
+th:first-child{text-align:left}
+td{padding:6px 8px;font-family:'DM Mono',monospace;text-align:right;color:#1A1714}
+td:first-child{text-align:left;color:#7A7268;font-family:'DM Sans',monospace}
+tr:nth-child(even){background:#faf8f5}
+.ai-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:1px solid #E2DDD6;color:#7A7268;background:transparent;border-radius:8px;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;margin-right:8px;margin-bottom:8px}
+.ai-btn:hover,.ai-btn.on{background:#2C4A7C;color:#fff;border-color:#2C4A7C}
+.ai-result{margin-top:14px;border-top:1px solid #E2DDD6;padding-top:14px}
+.ai-line{padding:8px 12px;margin-bottom:4px;border-radius:8px;font-size:13px;line-height:1.7;color:#1A1714;border:1px solid #E2DDD6}
+.ai-line:nth-child(odd){background:#faf8f5}
+.spinner{width:18px;height:18px;border:2px solid #E2DDD6;border-top-color:#2C4A7C;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.geo-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.geo-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.geo-name{font-size:11px;color:#7A7268;width:150px;flex-shrink:0}
+.geo-track{flex:1;height:5px;background:#E2DDD6;border-radius:3px}
+.geo-fill{height:5px;border-radius:3px;transition:width .6s}
+.geo-pct{font-size:12px;font-weight:600;font-family:'DM Mono',monospace;width:36px;text-align:right}
+.empty{text-align:center;padding:24px 0;color:#B0A898;font-size:12px}
+@media(max-width:600px){.kpis{grid-template-columns:1fr 1fr}.company-row{grid-template-columns:1fr 80px}.co-cap{display:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">✦ Analyse Fondamentale</div>
+  <div class="search-wrap">
+    <button id="searchBtn" onclick="openSearch()">🔍 Rechercher une action</button>
+    <div id="searchBox">
+      <span>🔍</span>
+      <input id="searchInput" placeholder="Apple, LVMH, TotalEnergies…" oninput="doSearch(this.value)" onkeydown="if(event.key==='Escape')closeSearch()"/>
+      <button onclick="closeSearch()">✕</button>
+    </div>
+    <div id="results"></div>
+  </div>
+</header>
+
+<div id="home">
+  <main>
+    <h1>Marchés financiers</h1>
+    <p class="subtitle">Sélectionne une entreprise pour accéder à son analyse fondamentale complète</p>
+    <div id="markets"><div style="text-align:center;padding:60px 0;color:#B0A898"><span class="spinner"></span>Chargement des marchés…</div></div>
+  </main>
+</div>
+
+<div id="detail">
+  <button class="back-btn" onclick="showHome()">← Retour aux marchés</button>
+  <div id="detailContent"><div style="text-align:center;padding:60px 0;color:#B0A898"><span class="spinner"></span></div></div>
+</div>
+
+<script>
+const KEY = "s0BLKiROWmOfW3hanrhkAkIKKNl5Wo7L";
+const v3 = p => `https://financialmodelingprep.com/api/v3/${p}${p.includes('?')?'&':'?'}apikey=${KEY}`;
+const v4 = p => `https://financialmodelingprep.com/api/v4/${p}${p.includes('?')?'&':'?'}apikey=${KEY}`;
+
+const MARKETS = {
+  "CAC 40": ["MC.PA","TTE.PA","SAN.PA","BNP.PA","AIR.PA","OR.PA","SU.PA","RI.PA","DG.PA","KER.PA","BN.PA","ACA.PA","GLE.PA","RMS.PA","CS.PA","ORA.PA","CAP.PA","ML.PA","EN.PA"],
+  "S&P 500 — Tech": ["AAPL","MSFT","NVDA","GOOGL","META","AMZN","AVGO","ORCL","AMD","TSM"],
+  "S&P 500 — Finance": ["JPM","V","MA","BAC","WFC","GS","MS","BLK","AXP","C"],
+  "S&P 500 — Santé": ["LLY","JNJ","UNH","ABBV","MRK","TMO","ABT","DHR","PFE","AMGN"],
+  "DAX": ["SAP","SIE.DE","ALV.DE","MBG.DE","BMW.DE","DTE.DE","BAYN.DE","DBK.DE","BAS.DE","MUV2.DE"],
+};
+
+const GEO_KW = {asia:["asia","china","japan","korea","india","southeast","pacific","hong kong","singapore","taiwan","apac"],usa:["united states","north america","americas","canada","usa","us ","u.s."],europe:["europe","germany","france","uk","britain","italy","spain","emea","netherlands","switzerland"],latam:["latin america","brazil","mexico","south america"],middle:["middle east","africa","mea","gulf","saudi"],other:["other","rest of","worldwide"]};
+const GEO_L = {asia:"Asie / Pacifique",usa:"Amériques",europe:"Europe",latam:"Amér. latine",middle:"MO & Afrique",other:"Autres"};
+const GEO_C = {asia:"#F59E0B",usa:"#3B82F6",europe:"#10B981",latam:"#EC4899",middle:"#F97316",other:"#8B5CF6"};
+
+const fmt=(n,d=1)=>{if(n==null||isNaN(n))return"—";const a=Math.abs(n);if(a>=1e12)return(n/1e12).toFixed(d)+"T";if(a>=1e9)return(n/1e9).toFixed(d)+"Md";if(a>=1e6)return(n/1e6).toFixed(d)+"M";return(+n).toFixed(d);};
+const fmtP=n=>n==null||isNaN(n)?"—":(n*100).toFixed(1)+"%";
+const fmtR=(n,d=2)=>n==null||isNaN(n)?"—":(+n).toFixed(d);
+
+let searchTimer;
+function openSearch(){document.getElementById('searchBtn').style.display='none';const b=document.getElementById('searchBox');b.style.display='flex';b.querySelector('input').focus();}
+function closeSearch(){document.getElementById('searchBtn').style.display='flex';document.getElementById('searchBox').style.display='none';document.getElementById('results').style.display='none';document.getElementById('searchInput').value='';}
+function doSearch(q){
+  clearTimeout(searchTimer);
+  if(!q||q.length<2){document.getElementById('results').style.display='none';return;}
+  searchTimer=setTimeout(async()=>{
+    try{
+      const r=await fetch(v3(`search?query=${encodeURIComponent(q)}&limit=8`));
+      const d=await r.json();
+      const items=(d||[]).filter(x=>x.exchangeShortName&&["NYSE","NASDAQ","EURONEXT","LSE","SWX"].includes(x.exchangeShortName)).slice(0,6);
+      const el=document.getElementById('results');
+      if(!items.length){el.style.display='none';return;}
+      el.innerHTML=items.map(r=>`<div class="res-item" onclick="loadDetail('${r.symbol}')"><div><span class="res-name">${r.name}</span><span class="res-ticker">${r.symbol}</span></div><span class="res-ex">${r.exchangeShortName}</span></div>`).join('');
+      el.style.display='block';
+    }catch(e){}
+  },300);
+}
+
+async function loadHome(){
+  const el=document.getElementById('markets');
+  let html='';
+  for(const[name,tickers]of Object.entries(MARKETS)){
+    try{
+      const r=await fetch(v3(`quote/${tickers.join(',')}`));
+      const d=await r.json();
+      if(!Array.isArray(d))continue;
+      const cos=d.filter(q=>q&&q.symbol).sort((a,b)=>(b.marketCap||0)-(a.marketCap||0));
+      html+=`<div class="market-section">
+        <div class="market-title">${name}<span class="market-count">${cos.length} entreprises · cap. décroissante</span></div>
+        <div class="company-list">`;
+      cos.forEach((co,i)=>{
+        const rankBadge=i<3?`<span class="rank rank-${i+1}">#${i+1}</span>`:'<span style="width:28px;display:inline-block"></span>';
+        const chg=co.changesPercentage||0;
+        html+=`<div class="company-row" onclick="loadDetail('${co.symbol}')">
+          <div>${rankBadge}<span class="co-name">${co.name||co.symbol}</span><br/><span style="margin-left:28px" class="co-ticker">${co.symbol}</span></div>
+          <div class="co-cap">${fmt(co.marketCap)}</div>
+          <div class="co-price">${fmtR(co.price,2)}</div>
+          <div class="co-change ${chg>=0?'pos':'neg'}">${chg>=0?'+':''}${fmtR(chg,1)}%</div>
+        </div>`;
+      });
+      html+='</div></div>';
+    }catch(e){html+=`<div style="color:#B0A898;font-size:12px;margin-bottom:20px">Erreur de chargement pour ${name}</div>`;}
+  }
+  el.innerHTML=html||'<div class="empty">Aucune donnée disponible</div>';
+}
+
+function showHome(){
+  document.getElementById('home').style.display='block';
+  document.getElementById('detail').style.display='none';
+}
+
+let currentIncome=[],currentBalance=[],currentCashflow=[],currentGeo=[],currentCompany=null;
+let currentTab='income',currentAI=null;
+
+async function loadDetail(ticker){
+  closeSearch();
+  document.getElementById('home').style.display='none';
+  document.getElementById('detail').style.display='block';
+  document.getElementById('detailContent').innerHTML='<div style="text-align:center;padding:60px 0;color:#B0A898"><span class="spinner"></span> Chargement…</div>';
+  try{
+    const [pR,qR,iR,bR,cR,gR]=await Promise.all([
+      fetch(v3(`profile/${ticker}`)),fetch(v3(`quote/${ticker}`)),
+      fetch(v3(`income-statement/${ticker}?period=quarter&limit=8`)),
+      fetch(v3(`balance-sheet-statement/${ticker}?period=quarter&limit=4`)),
+      fetch(v3(`cash-flow-statement/${ticker}?period=quarter&limit=4`)),
+      fetch(v4(`revenue-geographic-segmentation?symbol=${ticker}&period=annual`)),
+    ]);
+    const [p,q,inc,bal,cf,geo]=await Promise.all([pR.json(),qR.json(),iR.json(),bR.json(),cR.json(),gR.json()]);
+    currentCompany={...( p[0]||{}),... (q[0]||{})};
+    currentIncome=inc||[];currentBalance=bal||[];currentCashflow=cf||[];
+    currentGeo=Array.isArray(geo)?geo:(geo?[geo]:[]);
+    currentAI=null;currentTab='income';
+    renderDetail();
+  }catch(e){document.getElementById('detailContent').innerHTML=`<div style="color:#C0392B;padding:20px">Erreur : ${e.message}</div>`;}
+}
+
+function classGeo(n){const l=(n||'').toLowerCase();for(const[k,kw]of Object.entries(GEO_KW)){if(kw.some(w=>l.includes(w)))return k;}return'other';}
+function getGeoAgg(){
+  if(!currentGeo||!currentGeo.length)return[];
+  const raw=currentGeo[0]?.data||currentGeo[0];if(!raw)return[];
+  const agg={};
+  for(const[r,v]of Object.entries(raw||{})){const c=classGeo(r);agg[c]=(agg[c]||0)+(v||0);}
+  const tot=Object.values(agg).reduce((s,v)=>s+v,0)||1;
+  return Object.entries(agg).map(([k,v])=>({id:k,name:GEO_L[k]||k,pct:Math.round(v/tot*100),color:GEO_C[k]||'#94a3b8'})).sort((a,b)=>b.pct-a.pct).filter(g=>g.pct>0);
+}
+
+function renderDetail(){
+  const co=currentCompany;if(!co)return;
+  const chg=co.changesPercentage||0;
+  const geo=getGeoAgg();
+
+  // Income table
+  const incRows=currentIncome.slice(0,6).map((q,i)=>`<tr><td>${q.date?.slice(0,7)||'—'}</td><td>${fmt(q.revenue)}</td><td style="color:#2C4A7C">${fmtP(q.grossProfitRatio)}</td><td>${fmt(q.ebitda)}</td><td style="color:${q.netIncome>=0?'#2D7A50':'#C0392B'}">${fmt(q.netIncome)}</td><td style="color:#2C4A7C">${fmtP(q.netIncomeRatio)}</td></tr>`).join('');
+
+  // Balance
+  const b=currentBalance[0]||{};
+  const balRows=[['Cash & équivalents',b.cashAndCashEquivalents],['Créances',b.netReceivables],['Stocks',b.inventory],['<b>Total actif courant</b>',b.totalCurrentAssets],['Immobilisations',b.propertyPlantEquipmentNet],['<b>Total actifs</b>',b.totalAssets]].map(([l,v])=>`<tr><td style="color:#1A1714">${l}</td><td></td><td></td><td>${fmt(v)}</td><td></td><td></td></tr>`).join('');
+
+  // Cashflow
+  const c=currentCashflow[0]||{};
+  const cfRows=[['💼 Cash flow opérationnel',c.operatingCashFlow,true],['Dépréciation',c.depreciationAndAmortization,false],['🏗 Capex',c.capitalExpenditure,false],['💰 Free Cash Flow',c.freeCashFlow,true],['Dividendes versés',c.dividendsPaid,false],['Rachats d\'actions',c.commonStockRepurchased,false]].map(([l,v,bold])=>`<tr><td style="color:${bold?'#1A1714':'#7A7268'};font-weight:${bold?600:400};font-family:'DM Sans',sans-serif">${l}</td><td></td><td></td><td style="color:${v>=0?'#2D7A50':'#C0392B'};font-weight:${bold?600:400}">${fmt(v)}</td><td></td><td></td></tr>`).join('');
+
+  // Geo bars
+  const geoBars=geo.length?geo.map(g=>`<div class="geo-bar-row"><div class="geo-dot" style="background:${g.color}"></div><div class="geo-name">${g.name}</div><div class="geo-track"><div class="geo-fill" style="width:${g.pct}%;background:${g.color}"></div></div><div class="geo-pct" style="color:${g.color}">${g.pct}%</div></div>`).join(''):'<div class="empty">📍 Données géographiques non disponibles.</div>';
+
+  const tabContent={
+    income:`<table><thead><tr><th style="text-align:left">Trimestre</th><th>CA</th><th>Marge brute</th><th>EBITDA</th><th>Résultat net</th><th>Marge nette</th></tr></thead><tbody>${incRows}</tbody></table>`,
+    balance:`<div style="font-size:11px;color:#7A7268;font-family:'DM Mono',monospace;margin-bottom:10px;padding:3px 8px;background:#F7F4EF;border-radius:5px;display:inline-block">${b.date?.slice(0,7)||'—'}</div><table><thead><tr><th style="text-align:left">Poste</th><th></th><th></th><th>Montant</th><th></th><th></th></tr></thead><tbody>${balRows}</tbody></table><br/>${[['Dettes court terme',b.shortTermDebt],['Fournisseurs',b.accountPayables],['<b>Total passif courant</b>',b.totalCurrentLiabilities],['Dettes long terme',b.longTermDebt],['<b>Total dettes</b>',b.totalDebt],['<b>Capitaux propres</b>',b.totalStockholdersEquity]].map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #E2DDD6;font-size:12px"><span style="color:#1A1714">${l}</span><span style="font-family:'DM Mono',monospace">${fmt(v)}</span></div>`).join('')}`,
+    cashflow:`<div style="font-size:11px;color:#7A7268;font-family:'DM Mono',monospace;margin-bottom:10px;padding:3px 8px;background:#F7F4EF;border-radius:5px;display:inline-block">${c.date?.slice(0,7)||'—'}</div><table><thead><tr><th style="text-align:left">Poste</th><th></th><th></th><th>Montant</th><th></th><th></th></tr></thead><tbody>${cfRows}</tbody></table>`,
+  };
+
+  document.getElementById('detailContent').innerHTML=`
+    <div class="detail-header">
+      <div>
+        ${co.image?`<img src="${co.image}" style="width:44px;height:44px;border-radius:10px;object-fit:contain;border:1px solid #E2DDD6;padding:4px;background:#fff;vertical-align:middle;margin-right:10px"/>`:''}
+        <span class="detail-name">${co.companyName||co.symbol}</span>
+        <div class="detail-meta">${co.symbol} · ${co.exchangeShortName||''} · ${co.sector||''}</div>
+      </div>
+      <div>
+        <div class="detail-price">${fmtR(co.price,2)} ${co.currency||'€'}</div>
+        <div style="font-size:13px;color:${chg>=0?'#2D7A50':'#C0392B'};font-weight:500;text-align:right;margin-top:3px">${chg>=0?'+':''}${fmtR(chg,1)}% aujourd'hui</div>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-label">Capitalisation</div><div class="kpi-val">${fmt(co.mktCap)}</div></div>
+      <div class="kpi"><div class="kpi-label">PER</div><div class="kpi-val">${co.pe?fmtR(co.pe,1)+'×':'—'}</div></div>
+      <div class="kpi"><div class="kpi-label">Dividende</div><div class="kpi-val">${co.lastDiv?fmtR(co.lastDiv)+' '+(co.currency||'€'):'—'}</div></div>
+      <div class="kpi"><div class="kpi-label">Beta</div><div class="kpi-val">${co.beta?fmtR(co.beta,2):'—'}</div></div>
+    </div>
+
+    <div class="section-title">États financiers</div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:13px;font-weight:600">8 derniers trimestres</div>
+        <div class="tabs">
+          <button class="tab-btn ${currentTab==='income'?'on':''}" onclick="switchTab('income')">Résultats</button>
+          <button class="tab-btn ${currentTab==='balance'?'on':''}" onclick="switchTab('balance')">Bilan</button>
+          <button class="tab-btn ${currentTab==='cashflow'?'on':''}" onclick="switchTab('cashflow')">Cash Flow</button>
+        </div>
+      </div>
+      <div id="tabContent" style="overflow-x:auto">${tabContent[currentTab]||''}</div>
+    </div>
+
+    <div class="section-title">Répartition géographique du CA</div>
+    <div class="card">${geoBars}</div>
+
+    <div class="section-title">Analyse IA</div>
+    <div class="card">
+      <div style="font-size:11px;color:#B0A898;margin-bottom:12px">Choisis le sujet à analyser</div>
+      <div>
+        <button class="ai-btn" onclick="runAI('resultats')">📊 Résultats</button>
+        <button class="ai-btn" onclick="runAI('bilan')">🏦 Bilan</button>
+        <button class="ai-btn" onclick="runAI('cashflow')">💰 Cash Flow</button>
+        <button class="ai-btn" onclick="runAI('geo')">🌍 Géographie</button>
+      </div>
+      <div id="aiResult" style="color:#B0A898;font-size:12px;padding:12px;background:#F7F4EF;border-radius:9px;margin-top:12px;text-align:center">Clique sur un bouton pour analyser</div>
+    </div>
+    <div style="text-align:center;font-size:10px;color:#B0A898;margin-top:14px">Données Financial Modeling Prep · Ceci n'est pas un conseil en investissement</div>`;
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  const co=currentCompany;
+  const inc=currentIncome,bal=currentBalance[0]||{},c=currentCashflow[0]||{};
+  const incRows=inc.slice(0,6).map(q=>`<tr><td>${q.date?.slice(0,7)||'—'}</td><td>${fmt(q.revenue)}</td><td style="color:#2C4A7C">${fmtP(q.grossProfitRatio)}</td><td>${fmt(q.ebitda)}</td><td style="color:${q.netIncome>=0?'#2D7A50':'#C0392B'}">${fmt(q.netIncome)}</td><td style="color:#2C4A7C">${fmtP(q.netIncomeRatio)}</td></tr>`).join('');
+  const tabs={
+    income:`<table><thead><tr><th style="text-align:left">Trimestre</th><th>CA</th><th>Marge brute</th><th>EBITDA</th><th>Résultat net</th><th>Marge nette</th></tr></thead><tbody>${incRows}</tbody></table>`,
+    balance:[['Cash',bal.cashAndCashEquivalents],['Créances',bal.netReceivables],['Stocks',bal.inventory],['Total actif courant',bal.totalCurrentAssets],['Immobilisations',bal.propertyPlantEquipmentNet],['Total actifs',bal.totalAssets],['—',null],['Dettes CT',bal.shortTermDebt],['Fournisseurs',bal.accountPayables],['Total passif courant',bal.totalCurrentLiabilities],['Dettes LT',bal.longTermDebt],['Total dettes',bal.totalDebt],['Capitaux propres',bal.totalStockholdersEquity]].map(([l,v])=>v!==null?`<div style="display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px solid #f0ede8;font-size:12px"><span style="color:#1A1714">${l}</span><span style="font-family:'DM Mono',monospace">${fmt(v)}</span></div>`:'<div style="height:10px"></div>').join(''),
+    cashflow:[['💼 Cash flow opérationnel',c.operatingCashFlow,true],['Dépréciation',c.depreciationAndAmortization,false],['🏗 Capex',c.capitalExpenditure,false],['💰 Free Cash Flow',c.freeCashFlow,true],['Dividendes versés',c.dividendsPaid,false],['Rachats d\'actions',c.commonStockRepurchased,false],['Variation nette cash',c.netChangeInCash,true]].map(([l,v,b])=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;border-bottom:1px solid #f0ede8;font-size:12px"><span style="color:${b?'#1A1714':'#7A7268'};font-weight:${b?600:400}">${l}</span><span style="font-family:'DM Mono',monospace;color:${v>=0?'#2D7A50':'#C0392B'};font-weight:${b?600:400}">${fmt(v)}</span></div>`).join(''),
+  };
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('on',b.textContent.trim()==={income:'Résultats',balance:'Bilan',cashflow:'Cash Flow'}[tab]));
+  document.getElementById('tabContent').innerHTML=tabs[tab]||'';
+}
+
+async function runAI(scope){
+  const co=currentCompany;if(!co)return;
+  const el=document.getElementById('aiResult');
+  el.innerHTML='<span class="spinner"></span> Analyse en cours…';
+  const geo=getGeoAgg();
+  const P={
+    resultats:`Analyse pour un débutant les résultats de ${co.companyName}. CA: ${fmt(currentIncome[0]?.revenue)}, marge brute: ${fmtP(currentIncome[0]?.grossProfitRatio)}, résultat net: ${fmt(currentIncome[0]?.netIncome)}. 4 bullet points sans jargon en français.`,
+    bilan:`Explique le bilan de ${co.companyName}. Actifs: ${fmt(currentBalance[0]?.totalAssets)}, dettes: ${fmt(currentBalance[0]?.totalDebt)}, capitaux propres: ${fmt(currentBalance[0]?.totalStockholdersEquity)}. 4 bullet points.`,
+    cashflow:`Explique les flux de ${co.companyName}. Cash flow opérationnel: ${fmt(currentCashflow[0]?.operatingCashFlow)}, free cash flow: ${fmt(currentCashflow[0]?.freeCashFlow)}. 4 bullet points en français.`,
+    geo:geo.length?`Répartition géographique de ${co.companyName}: ${geo.map(g=>`${g.name} ${g.pct}%`).join(', ')}. Risques et opportunités? 4 bullet points.`:`Pas de données géographiques.`,
+  };
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,messages:[{role:'user',content:P[scope]}]})});
+    const d=await r.json();
+    const txt=d.content?.[0]?.text||'Indisponible.';
+    el.innerHTML='<div class="ai-result">'+txt.split('\n').filter(l=>l.trim()).map((l,i)=>`<div class="ai-line">${l}</div>`).join('')+'</div>';
+  }catch(e){el.innerHTML='<div style="color:#C0392B;font-size:12px">Erreur de connexion.</div>';}
+}
+
+// Init
+loadHome();
+</script>
+</body>
+</html>
